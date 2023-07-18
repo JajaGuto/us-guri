@@ -1,7 +1,7 @@
 class EnvironmentConfig:
     def __init__(self):
         self.seed = 8
-        self.n_agents = 3
+        self.n_agents = 2
         self.grid_size = 16
         self.max_cycles = 25
         self.learn_policy = "grid_wise_control"

@@ -3,15 +3,14 @@ import os
 import pickle
 
 from agent.agents import MyAgents
-from common.pettingzoo_environment import SimpleSpreadEnv
+# from common.pettingzoo_environment import SimpleSpreadEnv
 from common.reply_buffer import *
-from environment import Environment
 
 
 class RunnerSimpleSpreadEnv(object):
 
-    def __init__(self, env: SimpleSpreadEnv):
-        self.env = Environment()
+    def __init__(self, env):
+        self.env = env
         self.train_config = ConfigObjectFactory.get_train_config()
         self.env_config = ConfigObjectFactory.get_environment_config()
         self.current_epoch = 0

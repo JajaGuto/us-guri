@@ -1,6 +1,6 @@
 environment:
   grid_size: 16
-  learn_policy: "independent_ppo"
+  learn_policy: "qmix"
   max_cycles: 40
 train:
   epochs: 1000000

@@ -1,6 +1,6 @@
 import pygame
-import sys
 import numpy as np
+from utils.env_utils import *
 
 # Inicializa o Pygame
 pygame.init()
@@ -172,6 +172,19 @@ class Environment:
         self.s_r2 = []
         self.update_states()
         self.display_gamescreen()
+        self.env_config = ConfigObjectFactory.get_environment_config()
+
+    def get_env_info(self) -> dict:
+        map_info = {
+            # 'grid_input_shape': [0, len(self.grid_input_features), self.grid_size, self.grid_size],
+            'n_agents': 2,
+            'agents_name': ["Red", "Blue"],
+            'obs_space': 53,
+            'n_actions': 4,
+            'state_space': 4
+        }
+        # map_info['n_actions'] = 4
+        return map_info
 
     def step(self, action, robot_id):
         collided = False
