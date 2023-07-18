@@ -198,7 +198,7 @@ class Environment:
         elif action == 2:
             self.robot1.turn_left()
         
-        self.update_states(1)
+        self.update_state(1)
         done = self.check_end()
 
         rewards = []
@@ -227,7 +227,7 @@ class Environment:
         elif action == 2:
             self.robot2.turn_left()
 
-        self.update_states(2)
+        self.update_state(2)
         done = self.check_end()
 
         reward = -1
@@ -301,7 +301,11 @@ class Environment:
 
         return [self.s_r1, self.s_r2], reward, done
 
-    def update_states(self, robot_id):
+    def update_states(self):
+        self.update_state(1)
+        self.update_state(2)
+
+    def update_state(self, robot_id):
         # updating states
         if robot_id == 1:
             self.s_r1 = map_matrix.copy()
