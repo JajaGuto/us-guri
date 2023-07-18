@@ -68,14 +68,14 @@ class RunnerSimpleSpreadEnv(object):
             elif isinstance(self.batch_episode_memory, CommBatchEpisodeMemory):
                 for i in range(run_episode):
                     self.env.reset()
-                    obs = self.env.get_state(robot_id=1)
+                    obs = self.env.get_state()
                     finish_game = False
                     cycle = 0
                     while not finish_game and cycle < self.env_config.max_cycles:
-                        state = self.env.get_state(robot_id=1)
+                        state = self.env.get_state()
                         actions_with_name, actions, log_probs = self.agents.choose_actions(obs)
                         obs_next, rewards, finish_game = self.env.step(actions_with_name, robot_id=1)
-                        state_next = self.env.get_state(robot_id=1)
+                        state_next = self.env.get_state()
                         if "ppo" in self.env_config.learn_policy:
                             self.batch_episode_memory.store_one_episode(one_obs=obs, one_state=state, action=actions,
                                                                         reward=rewards, log_probs=log_probs)

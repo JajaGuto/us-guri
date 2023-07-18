@@ -48,6 +48,7 @@ class QMixNet(nn.Module, ABC):
         # states的shape为(batch_size, max_episode_len， state_shape)
         # 传入的q_values是三维的，shape为(batch_size, max_episode_len， n_agents)
         episode_num = q_values.size(0)
+        print("antes ", q_values.shape, states.shape)
         q_values = q_values.view(-1, 1, self.n_agents)
         states = states.reshape(-1, self.state_shape)
 
@@ -56,6 +57,8 @@ class QMixNet(nn.Module, ABC):
 
         w1 = w1.view(-1, self.n_agents, self.qmix_hidden_dim)
         b1 = b1.view(-1, 1, self.qmix_hidden_dim)
+
+        print(q_values.shape, w1.shape)
 
         hidden = F.elu(torch.bmm(q_values, w1) + b1)
 

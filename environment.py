@@ -231,9 +231,7 @@ class Environment:
         self.display_gamescreen()
 
         if robot_id == 1:
-            return self.s_r1, reward, done
-        elif robot_id == 2:
-            return self.s_r2, reward, done
+            return [self.s_r1, self.s_r2], reward, done
 
     def update_states(self):
         # updating states
@@ -308,11 +306,8 @@ class Environment:
         #self.target = Target(self.get_random_position(0, BOARD_SIZE), GREEN)
         self.update_states()
 
-    def get_state(self, robot_id):
-        if robot_id == 1:
-            return self.s_r1
-        elif robot_id == 2:
-            return self.s_r2
+    def get_state(self):
+        return [self.s_r1, self.s_r2]
 
     # Função para desenhar o tabuleiro
     def draw_board(self):

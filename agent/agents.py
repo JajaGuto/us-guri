@@ -98,7 +98,7 @@ class MyAgents:
         actions_with_name = {}
         actions = []
         log_probs = []
-        obs = torch.stack([torch.Tensor(value) for value in obs.values()], dim=0)
+        obs = torch.stack([torch.Tensor(value) for value in obs], dim=0)
         self.policy.init_hidden(1)
         if isinstance(self.policy, QMix):
             actions_ind = [i for i in range(self.n_actions)]
