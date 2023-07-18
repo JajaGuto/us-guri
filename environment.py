@@ -186,7 +186,76 @@ class Environment:
         # map_info['n_actions'] = 4
         return map_info
 
-    def step(self, action, robot_id):
+    def step(self, actions):
+        collided = False
+
+        action = actions[0]
+    
+        if action == 0:
+            collided = self.robot1.move_forward(self.robot2)
+        elif action == 1:
+            self.robot1.turn_right()
+        elif action == 2:
+            self.robot1.turn_left()
+        
+        self.update_states(1)
+        done = self.check_end()
+
+        rewards = []
+
+        reward = -1
+        # se conseguir completar tudo
+        if done:
+            reward = 100
+        # se bateu na parede ou no amiguinho
+        elif collided:
+            #done = True
+            reward = -1
+        else:
+            if self.check_facings(self.robot1):
+                reward = 100
+        
+        rewards.append[reward]
+
+        action = actions[1]
+        collided = False
+
+        if action == 0:
+            collided = self.robot2.move_forward(self.robot1)
+        elif action == 1:
+            self.robot2.turn_right()
+        elif action == 2:
+            self.robot2.turn_left()
+
+        self.update_states(2)
+        done = self.check_end()
+
+        reward = -1
+        # se conseguir completar tudo
+        if done:
+            reward = 100
+        # se bateu na parede ou no amiguinho
+        elif collided:
+            #done = True
+            reward = -1
+        else:
+            if self.check_facings(self.robot2):
+                reward = 100
+        
+        rewards.append[reward]
+                
+
+        #print("printing both states")
+        #print("Robot 1 state")
+        #print(self.s_r1)
+        #print("Robot 2 state")
+        #print(self.s_r2)
+
+        self.display_gamescreen()
+
+        return [self.s_r1, self.s_r2], rewards, done
+
+    def step_sep(self, action, robot_id):
         collided = False
         if robot_id == 1:
             if action == 0:
@@ -230,52 +299,51 @@ class Environment:
 
         self.display_gamescreen()
 
-        if robot_id == 1:
-            return [self.s_r1, self.s_r2], reward, done
+        return [self.s_r1, self.s_r2], reward, done
 
-    def update_states(self):
+    def update_states(self, robot_id):
         # updating states
-        self.s_r1 = map_matrix.copy()
-        self.s_r1[self.spot1.pos[0]][self.spot1.pos[1]] = 2
-        self.s_r1[self.spot2.pos[0]][self.spot2.pos[1]] = 2
-        self.s_r2 = self.s_r1.copy()
+        if robot_id == 1:
+            self.s_r1 = map_matrix.copy()
+            self.s_r1[self.spot1.pos[0]][self.spot1.pos[1]] = 2
+            self.s_r1[self.spot2.pos[0]][self.spot2.pos[1]] = 2
 
+            if not self.robot1.ordered:
+                self.s_r1[self.target.pos[0]][self.target.pos[1]] = 3
+            elif not self.robot1.spot:
+                self.s_r1[self.target.pos[0]][self.target.pos[1]] = 4
+            elif not self.robot1.delivered:
+                self.s_r1[self.target.pos[0]][self.target.pos[1]] = 5
+            else:
+                self.s_r1[self.target.pos[0]][self.target.pos[1]] = 6
 
-        self.ordered = False
-        self.spot = False
-        self.delivered = False
+            self.s_r1[self.robot1.pos[0]][self.robot1.pos[1]] = 7
+            self.s_r1[self.robot2.pos[0]][self.robot2.pos[1]] = 8
 
-        if not self.robot1.ordered:
-            self.s_r1[self.target.pos[0]][self.target.pos[1]] = 3
-        elif not self.robot1.spot:
-            self.s_r1[self.target.pos[0]][self.target.pos[1]] = 4
-        elif not self.robot1.delivered:
-            self.s_r1[self.target.pos[0]][self.target.pos[1]] = 5
-        else:
-            self.s_r1[self.target.pos[0]][self.target.pos[1]] = 6
+            self.s_r1 = self.s_r1.flatten()
+            self.s_r1 = np.append(self.s_r1, DIRECTIONS_ANN[self.robot1.direction])
+            self.s_r1 = np.append(self.s_r1, DIRECTIONS_ANN[self.robot2.direction])
 
-        self.s_r1[self.robot1.pos[0]][self.robot1.pos[1]] = 7
-        self.s_r1[self.robot2.pos[0]][self.robot2.pos[1]] = 8
+        elif robot_id == 2:
+            self.s_r2 = map_matrix.copy()
+            self.s_r2[self.spot1.pos[0]][self.spot1.pos[1]] = 2
+            self.s_r2[self.spot2.pos[0]][self.spot2.pos[1]] = 2
 
-        if not self.robot2.ordered:
-            self.s_r2[self.target.pos[0]][self.target.pos[1]] = 3
-        elif not self.robot2.spot:
-            self.s_r2[self.target.pos[0]][self.target.pos[1]] = 4
-        elif not self.robot2.delivered:
-            self.s_r2[self.target.pos[0]][self.target.pos[1]] = 5
-        else:
-            self.s_r2[self.target.pos[0]][self.target.pos[1]] = 6
+            if not self.robot2.ordered:
+                self.s_r2[self.target.pos[0]][self.target.pos[1]] = 3
+            elif not self.robot2.spot:
+                self.s_r2[self.target.pos[0]][self.target.pos[1]] = 4
+            elif not self.robot2.delivered:
+                self.s_r2[self.target.pos[0]][self.target.pos[1]] = 5
+            else:
+                self.s_r2[self.target.pos[0]][self.target.pos[1]] = 6
 
-        self.s_r2[self.robot1.pos[0]][self.robot1.pos[1]] = 8
-        self.s_r2[self.robot2.pos[0]][self.robot2.pos[1]] = 7
+            self.s_r2[self.robot1.pos[0]][self.robot1.pos[1]] = 8
+            self.s_r2[self.robot2.pos[0]][self.robot2.pos[1]] = 7
 
-        self.s_r1 = self.s_r1.flatten()
-        self.s_r1 = np.append(self.s_r1, DIRECTIONS_ANN[self.robot1.direction])
-        self.s_r1 = np.append(self.s_r1, DIRECTIONS_ANN[self.robot2.direction])
-
-        self.s_r2 = self.s_r2.flatten()
-        self.s_r2 = np.append(self.s_r2, DIRECTIONS_ANN[self.robot2.direction])
-        self.s_r2 = np.append(self.s_r2, DIRECTIONS_ANN[self.robot1.direction])
+            self.s_r2 = self.s_r2.flatten()
+            self.s_r2 = np.append(self.s_r2, DIRECTIONS_ANN[self.robot2.direction])
+            self.s_r2 = np.append(self.s_r2, DIRECTIONS_ANN[self.robot1.direction])
 
     def check_facings(self, robot):
         c1 = self.target.check_facing(robot)
