@@ -111,7 +111,8 @@ class RunnerSimpleSpreadEnv(object):
                     self.save_model_and_result(epoch)
                 print("episode_{} over, avg_reward {}".format(epoch, avg_reward))
 
-                wandb.log({"Avarage Agents Rewards": avg_reward,
+                wandb.log({"Average Agent 1": avg_reward[0],
+                           "Average Agent 2": avg_reward[1],
                            "Episode": epoch})
 
     def init_saved_model(self):
