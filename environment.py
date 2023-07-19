@@ -27,6 +27,13 @@ BOARD_SIZE = 7
 SQUARE_SIZE = 100
 WIDTH = HEIGHT = BOARD_SIZE * SQUARE_SIZE
 
+PLAYER_POSITIONS = [[1,1],[1,2],[1,3],[1,4],[1,5],
+                    [2,1],[2,5],
+                    [3,1],[3,5],
+                    [4,1],[4,5],
+                    [5,1],[5,2],[5,3],[5,4],[5,5]
+                    ]
+
 # Cria a tela
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -58,7 +65,7 @@ def close_position_and_facing(p1, p2, direction):
 
 class Robot:
     def __init__(self, pos, color, direction):
-        self.pos = list(pos)
+        self.pos = pos
         self.color = color
         self.direction = direction
         self.ordered = False
@@ -158,12 +165,12 @@ class Spot:
 class Environment:
     def __init__(self):
         # Cria os robôs, o alvo e os pontos
-        self.robot1 = Robot(self.get_random_position(1, BOARD_SIZE - 2), RED, RIGHT)
-        self.r2_pos = self.get_random_position(1, BOARD_SIZE - 2)
+        self.robot1 = Robot(self.get_random_player_position(), RED, RIGHT)
+        r2_pos = self.get_random_player_position()
         # in order to not start at same position
-        while self.r2_pos == self.robot1.pos:
-            self.r2_pos = self.get_random_position(1, BOARD_SIZE - 2)
-        self.robot2 = Robot(self.r2_pos, BLUE, LEFT)
+        while r2_pos == self.robot1.pos:
+            r2_pos = self.get_random_player_position()
+        self.robot2 = Robot(r2_pos, BLUE, LEFT)
         self.spot1 = Spot(self.get_random_position(2, BOARD_SIZE - 4), YELLOW)
         self.spot2 = Spot(self.get_random_position(2, BOARD_SIZE - 4), YELLOW)
         self.target = Target(self.get_random_position(0, BOARD_SIZE), GREEN)
@@ -308,8 +315,10 @@ class Environment:
         # updating states
         if robot_id == 1:
             self.s_r1 = map_matrix.copy()
-            self.s_r1[self.spot1.pos[0]][self.spot1.pos[1]] = 2
-            self.s_r1[self.spot2.pos[0]][self.spot2.pos[1]] = 2
+            if not self.spot1.touched:
+                self.s_r1[self.spot1.pos[0]][self.spot1.pos[1]] = 2
+            if not self.spot2.touched:
+                self.s_r1[self.spot2.pos[0]][self.spot2.pos[1]] = 2
 
             if not self.robot1.ordered:
                 self.s_r1[self.target.pos[0]][self.target.pos[1]] = 3
@@ -329,8 +338,10 @@ class Environment:
 
         elif robot_id == 2:
             self.s_r2 = map_matrix.copy()
-            self.s_r2[self.spot1.pos[0]][self.spot1.pos[1]] = 2
-            self.s_r2[self.spot2.pos[0]][self.spot2.pos[1]] = 2
+            if not self.spot1.touched:
+                self.s_r2[self.spot1.pos[0]][self.spot1.pos[1]] = 2
+            if not self.spot2.touched:
+                self.s_r2[self.spot2.pos[0]][self.spot2.pos[1]] = 2
 
             if not self.robot2.ordered:
                 self.s_r2[self.target.pos[0]][self.target.pos[1]] = 3
@@ -361,12 +372,12 @@ class Environment:
 
     def reset(self):
         # Cria os robôs, o alvo e os pontos
-        self.robot1 = Robot(self.get_random_position(1, BOARD_SIZE - 2), RED, RIGHT)
-        r2_pos = self.get_random_position(1, BOARD_SIZE - 2)
+        self.robot1 = Robot(self.get_random_player_position(), RED, RIGHT)
+        r2_pos = self.get_random_player_position()
         # in order to not start at same position
         while r2_pos == self.robot1.pos:
-            r2_pos = self.get_random_position(1, BOARD_SIZE - 2)
-        self.robot2 = Robot(self.r2_pos, BLUE, LEFT)
+            r2_pos = self.get_random_player_position()
+        self.robot2 = Robot(r2_pos, BLUE, LEFT)
 
         self.spot1 = Spot(self.spot1.pos, YELLOW)
         self.spot2 = Spot(self.spot2.pos, YELLOW)
@@ -387,6 +398,11 @@ class Environment:
                 color = WHITE if map_matrix[y, x] == 1 else DARK_GRAY
                 pygame.draw.rect(screen, color, (x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
+    def get_random_player_position(self):
+        # print(np.random.randint(len(PLAYER_POSITIONS)))
+        # print(PLAYER_POSITIONS[np.random.randint(len(PLAYER_POSITIONS))])
+        return PLAYER_POSITIONS[np.random.randint(len(PLAYER_POSITIONS))]
+            
     def get_random_position(self, starting, size):
         if size == BOARD_SIZE:
             h = np.random.randint(1, size - 2)

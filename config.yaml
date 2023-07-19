@@ -1,7 +1,7 @@
 environment:
   grid_size: 16
   learn_policy: "qmix"
-  max_cycles: 40
+  max_cycles: 500
 train:
   epochs: 1000000
   show_evaluate_epoch: 100
