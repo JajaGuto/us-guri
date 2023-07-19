@@ -2,6 +2,7 @@ import csv
 import os
 import pickle
 import numpy as np
+import wandb
 
 from agent.agents import MyAgents
 # from common.pettingzoo_environment import SimpleSpreadEnv
@@ -43,70 +44,75 @@ class RunnerSimpleSpreadEnv(object):
     def run_marl(self):
         self.init_saved_model()
         run_episode = self.train_config.run_episode_before_train if "ppo" in self.env_config.learn_policy else 1
-        for epoch in range(self.current_epoch, self.train_config.epochs + 1):
-            # 在正式开始训练之前做一些动作并将信息存进记忆单元中
-            # grid_wise_control系列算法和常规marl算法不同, 是以格子作为观测空间。
-            # ppo 属于on policy算法，训练数据要是同策略的
-            total_reward = 0
-            if "grid_wise_control" in self.env_config.learn_policy and isinstance(self.batch_episode_memory,
-                                                                                  GridBatchEpisodeMemory):
-                for i in range(run_episode):
-                    self.env.reset()
-                    finish_game = False
-                    cycle = 0
-                    while not finish_game and cycle < self.env_config.max_cycles:
-                        grid_input = self.env.get_grid_input()
-                        unit_pos = self.env.get_agents_approximate_pos()
-                        actions_with_name, actions, log_probs = self.agents.choose_actions_in_grid(unit_pos=unit_pos,
-                                                                                                   grid_input=grid_input)
-                        observations, rewards, finish_game, infos = self.env.step(actions_with_name)
-                        grid_input_next = self.env.get_grid_input()
-                        self.batch_episode_memory.store_one_episode(grid_input, grid_input_next, unit_pos,
-                                                                    actions, rewards, log_probs)
-                        total_reward += rewards
-                        cycle += 1
-                    self.batch_episode_memory.set_per_episode_len(cycle)
-            elif isinstance(self.batch_episode_memory, CommBatchEpisodeMemory):
-                for i in range(run_episode):
-                    self.env.reset()
-                    obs = self.env.get_state()
-                    finish_game = False
-                    cycle = 0
-                    while not finish_game and cycle < self.env_config.max_cycles:
-                        state = np.hstack(self.env.get_state())
-                        actions_with_name, actions, log_probs = self.agents.choose_actions(obs)
-                        obs_next, rewards, finish_game = self.env.step(actions_with_name)
-                        state_next = np.hstack(self.env.get_state())
-                        if "ppo" in self.env_config.learn_policy:
-                            self.batch_episode_memory.store_one_episode(one_obs=obs, one_state=state, action=actions,
-                                                                        reward=rewards, log_probs=log_probs)
-                        else:
-                            self.batch_episode_memory.store_one_episode(one_obs=obs, one_state=state, action=actions,
-                                                                        reward=rewards, one_obs_next=obs_next,
-                                                                        one_state_next=state_next)
-                        total_reward += rewards
-                        obs = obs_next
-                        cycle += 1
-                    self.batch_episode_memory.set_per_episode_len(cycle)
-            if "ppo" in self.env_config.learn_policy:
-                # 可以用一个policy跑一个batch的数据来收集，由于性能问题假设batch=1，后续来优化
-                batch_data = self.batch_episode_memory.get_batch_data()
-                self.agents.learn(batch_data)
-                self.batch_episode_memory.clear_memories()
-            else:
-                self.memory.store_episode(self.batch_episode_memory)
-                self.batch_episode_memory.clear_memories()
-                if self.memory.get_memory_real_size() >= 10:
-                    for i in range(self.train_config.learn_num):
-                        batch = self.memory.sample(self.train_config.memory_batch)
-                        self.agents.learn(batch, epoch)
-            # avg_reward = self.evaluate()
-            avg_reward = total_reward / run_episode
-            one_result_buffer = [avg_reward]
-            self.result_buffer.append(one_result_buffer)
-            if epoch % self.train_config.save_epoch == 0 and epoch != 0:
-                self.save_model_and_result(epoch)
-            print("episode_{} over, avg_reward {}".format(epoch, avg_reward))
+
+        with wandb.init(project="Multi-Agent RL", name="QMix"):
+            for epoch in range(self.current_epoch, self.train_config.epochs + 1):
+                # 在正式开始训练之前做一些动作并将信息存进记忆单元中
+                # grid_wise_control系列算法和常规marl算法不同, 是以格子作为观测空间。
+                # ppo 属于on policy算法，训练数据要是同策略的
+                total_reward = 0
+                if "grid_wise_control" in self.env_config.learn_policy and isinstance(self.batch_episode_memory,
+                                                                                      GridBatchEpisodeMemory):
+                    for i in range(run_episode):
+                        self.env.reset()
+                        finish_game = False
+                        cycle = 0
+                        while not finish_game and cycle < self.env_config.max_cycles:
+                            grid_input = self.env.get_grid_input()
+                            unit_pos = self.env.get_agents_approximate_pos()
+                            actions_with_name, actions, log_probs = self.agents.choose_actions_in_grid(unit_pos=unit_pos,
+                                                                                                       grid_input=grid_input)
+                            observations, rewards, finish_game, infos = self.env.step(actions_with_name)
+                            grid_input_next = self.env.get_grid_input()
+                            self.batch_episode_memory.store_one_episode(grid_input, grid_input_next, unit_pos,
+                                                                        actions, rewards, log_probs)
+                            total_reward += rewards
+                            cycle += 1
+                        self.batch_episode_memory.set_per_episode_len(cycle)
+                elif isinstance(self.batch_episode_memory, CommBatchEpisodeMemory):
+                    for i in range(run_episode):
+                        self.env.reset()
+                        obs = self.env.get_state()
+                        finish_game = False
+                        cycle = 0
+                        while not finish_game and cycle < self.env_config.max_cycles:
+                            state = np.hstack(self.env.get_state())
+                            actions_with_name, actions, log_probs = self.agents.choose_actions(obs)
+                            obs_next, rewards, finish_game = self.env.step(actions_with_name)
+                            state_next = np.hstack(self.env.get_state())
+                            if "ppo" in self.env_config.learn_policy:
+                                self.batch_episode_memory.store_one_episode(one_obs=obs, one_state=state, action=actions,
+                                                                            reward=rewards, log_probs=log_probs)
+                            else:
+                                self.batch_episode_memory.store_one_episode(one_obs=obs, one_state=state, action=actions,
+                                                                            reward=rewards, one_obs_next=obs_next,
+                                                                            one_state_next=state_next)
+                            total_reward += rewards
+                            obs = obs_next
+                            cycle += 1
+                        self.batch_episode_memory.set_per_episode_len(cycle)
+                if "ppo" in self.env_config.learn_policy:
+                    # 可以用一个policy跑一个batch的数据来收集，由于性能问题假设batch=1，后续来优化
+                    batch_data = self.batch_episode_memory.get_batch_data()
+                    self.agents.learn(batch_data)
+                    self.batch_episode_memory.clear_memories()
+                else:
+                    self.memory.store_episode(self.batch_episode_memory)
+                    self.batch_episode_memory.clear_memories()
+                    if self.memory.get_memory_real_size() >= 10:
+                        for i in range(self.train_config.learn_num):
+                            batch = self.memory.sample(self.train_config.memory_batch)
+                            self.agents.learn(batch, epoch)
+                # avg_reward = self.evaluate()
+                avg_reward = total_reward / run_episode
+                one_result_buffer = [avg_reward]
+                self.result_buffer.append(one_result_buffer)
+                if epoch % self.train_config.save_epoch == 0 and epoch != 0:
+                    self.save_model_and_result(epoch)
+                print("episode_{} over, avg_reward {}".format(epoch, avg_reward))
+
+                wandb.log({"Avarage Agents Rewards": avg_reward,
+                           "Episode": epoch})
 
     def init_saved_model(self):
         if os.path.exists(self.result_path) and (

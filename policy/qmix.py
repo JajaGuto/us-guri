@@ -13,6 +13,7 @@ class QMix(BasePolicy):
 
     def __init__(self, env_info: dict):
         self.train_config = ConfigObjectFactory.get_train_config()
+
         self.env_config = ConfigObjectFactory.get_environment_config()
         self.n_agents = env_info['n_agents']
         self.n_actions = env_info['n_actions']
