@@ -1,6 +1,7 @@
 import csv
 import os
 import pickle
+import numpy as np
 
 from agent.agents import MyAgents
 # from common.pettingzoo_environment import SimpleSpreadEnv
@@ -72,10 +73,10 @@ class RunnerSimpleSpreadEnv(object):
                     finish_game = False
                     cycle = 0
                     while not finish_game and cycle < self.env_config.max_cycles:
-                        state = self.env.get_state()
+                        state = np.hstack(self.env.get_state())
                         actions_with_name, actions, log_probs = self.agents.choose_actions(obs)
-                        obs_next, rewards, finish_game = self.env.step(actions_with_name, robot_id=1)
-                        state_next = self.env.get_state()
+                        obs_next, rewards, finish_game = self.env.step(actions_with_name)
+                        state_next = np.hstack(self.env.get_state())
                         if "ppo" in self.env_config.learn_policy:
                             self.batch_episode_memory.store_one_episode(one_obs=obs, one_state=state, action=actions,
                                                                         reward=rewards, log_probs=log_probs)
@@ -105,7 +106,7 @@ class RunnerSimpleSpreadEnv(object):
             self.result_buffer.append(one_result_buffer)
             if epoch % self.train_config.save_epoch == 0 and epoch != 0:
                 self.save_model_and_result(epoch)
-            print("episode_{} over,avg_reward {}".format(epoch, avg_reward))
+            print("episode_{} over, avg_reward {}".format(epoch, avg_reward))
 
     def init_saved_model(self):
         if os.path.exists(self.result_path) and (

@@ -90,7 +90,7 @@ class QMix(BasePolicy):
         q_total_eval = self.qmix_net_eval(q_evals, state)
         q_total_target = self.qmix_net_target(q_targets, state_next)
 
-        targets = rewards + self.train_config.gamma * q_total_target * terminated
+        targets = rewards.squeeze() + self.train_config.gamma * q_total_target * terminated
         td_error = (q_total_eval - targets.detach())
         # 抹掉填充的经验的td_error
         masked_td_error = terminated * td_error

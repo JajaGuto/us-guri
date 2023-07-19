@@ -181,14 +181,14 @@ class Environment:
             'agents_name': ["Red", "Blue"],
             'obs_space': 53,
             'n_actions': 4,
-            'state_space': 4
+            'state_space': 106
         }
         # map_info['n_actions'] = 4
         return map_info
 
     def step(self, actions):
         collided = False
-
+        actions = list(actions.values())
         action = actions[0]
     
         if action == 0:
@@ -215,7 +215,7 @@ class Environment:
             if self.check_facings(self.robot1):
                 reward = 100
         
-        rewards.append[reward]
+        rewards.append(reward)
 
         action = actions[1]
         collided = False
@@ -242,8 +242,7 @@ class Environment:
             if self.check_facings(self.robot2):
                 reward = 100
         
-        rewards.append[reward]
-                
+        rewards.append(reward)
 
         #print("printing both states")
         #print("Robot 1 state")
@@ -253,7 +252,7 @@ class Environment:
 
         self.display_gamescreen()
 
-        return [self.s_r1, self.s_r2], rewards, done
+        return [self.s_r1, self.s_r2], np.array(rewards), done
 
     def step_sep(self, action, robot_id):
         collided = False

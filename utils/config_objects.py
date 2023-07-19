@@ -27,4 +27,4 @@ class TrainConfig:
         self.save_epoch = 1000
         self.model_dir = r"./models"
         self.result_dir = r"./results"
-        self.cuda = True
+        self.cuda = False
